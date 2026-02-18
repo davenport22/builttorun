@@ -1,0 +1,1 @@
+import{u as s}from"./page-container-CooLEeSj.js";import{s as o}from"./index-BRLjwUl5.js";function t(){return s({queryKey:["offices"],queryFn:async()=>{const{data:e,error:r}=await o.from("offices").select("*").order("name");if(r)throw r;return e}})}export{t as u};
