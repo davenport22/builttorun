@@ -21,14 +21,21 @@ export function Header() {
           </div>
         </Link>
 
-        <Link
-          to="/profile"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-dark-petrol shadow-md"
-        >
-          <span className="text-xs font-bold text-white">
-            {user?.email?.charAt(0).toUpperCase() ?? '?'}
-          </span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <img
+            src="/accilium-logo.png"
+            alt="Accilium"
+            className="h-7 w-7 rounded-lg object-contain"
+          />
+          <Link
+            to="/profile"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-dark-petrol shadow-md"
+          >
+            <span className="text-xs font-bold text-white">
+              {user?.email?.charAt(0).toUpperCase() ?? '?'}
+            </span>
+          </Link>
+        </div>
       </div>
     </header>
   )

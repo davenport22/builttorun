@@ -20,7 +20,20 @@ export default function EventsPage() {
   const { data: profile } = useProfile()
   const { data: offices } = useOffices()
   const createEvent = useCreateEvent()
-  const { data: externalRaces, isLoading: externalLoading, error: externalError } = useExternalRaces(page)
+  // Discover tab: filter by office city
+  const [discoverOfficeId, setDiscoverOfficeId] = useState<string | null>(null)
+
+  const discoverOfficeName = discoverOfficeId
+    ? (offices as Office[] | undefined)?.find((o) => o.id === discoverOfficeId)?.name ?? ''
+    : ''
+  const discoverCity = OFFICES.find((o) => o.name === discoverOfficeName)?.name ?? ''
+
+  const handleDiscoverOfficeChange = (officeId: string | null) => {
+    setDiscoverOfficeId(officeId)
+    setPage(1)
+  }
+
+  const { data: externalRaces, isLoading: externalLoading, isFetching: externalFetching, error: externalError } = useExternalRaces(page, discoverCity)
 
   // Default filter to user's home office
   const [selectedOfficeId, setSelectedOfficeId] = useState<string | null>(null)
@@ -159,6 +172,45 @@ export default function EventsPage() {
       {/* Discover tab - external race listings */}
       {tab === 'discover' && (
         <>
+          {/* Office city filter chips */}
+          <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => handleDiscoverOfficeChange(null)}
+              className={cn(
+                'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all',
+                discoverOfficeId === null
+                  ? 'bg-brand-dark-petrol text-white shadow-sm'
+                  : 'bg-gray-100 text-muted-foreground hover:bg-gray-200'
+              )}
+            >
+              All cities
+            </button>
+            {(offices as Office[] | undefined)?.map((office) => {
+              const officeConst = OFFICES.find((o) => o.name === office.name)
+              return (
+                <button
+                  key={office.id}
+                  onClick={() =>
+                    handleDiscoverOfficeChange(discoverOfficeId === office.id ? null : office.id)
+                  }
+                  className={cn(
+                    'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all',
+                    discoverOfficeId === office.id
+                      ? 'text-white shadow-sm'
+                      : 'bg-gray-100 text-muted-foreground hover:bg-gray-200'
+                  )}
+                  style={
+                    discoverOfficeId === office.id
+                      ? { backgroundColor: officeConst?.colorTheme ?? '#00677F' }
+                      : undefined
+                  }
+                >
+                  {office.name}
+                </button>
+              )
+            })}
+          </div>
+
           <div className="mb-4 rounded-2xl bg-brand-dark-petrol/5 px-4 py-3">
             <p className="text-xs text-muted-foreground">
               Upcoming races from <span className="font-bold text-brand-dark-petrol">Runners World Laufkalender</span>. Tap <span className="font-bold text-brand-dark-petrol">+</span> to add a race to your team.
@@ -168,6 +220,13 @@ export default function EventsPage() {
           {externalLoading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-5 w-5 animate-spin text-brand-teal" />
+            </div>
+          )}
+
+          {!externalLoading && externalFetching && (
+            <div className="mb-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-teal" />
+              Loading races…
             </div>
           )}
 
