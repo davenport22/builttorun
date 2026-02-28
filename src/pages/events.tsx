@@ -33,7 +33,7 @@ export default function EventsPage() {
     setPage(1)
   }
 
-  const { data: externalRaces, isLoading: externalLoading, error: externalError } = useExternalRaces(page, discoverCity)
+  const { data: externalRaces, isLoading: externalLoading, isFetching: externalFetching, error: externalError } = useExternalRaces(page, discoverCity)
 
   // Default filter to user's home office
   const [selectedOfficeId, setSelectedOfficeId] = useState<string | null>(null)
@@ -220,6 +220,13 @@ export default function EventsPage() {
           {externalLoading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-5 w-5 animate-spin text-brand-teal" />
+            </div>
+          )}
+
+          {!externalLoading && externalFetching && (
+            <div className="mb-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-teal" />
+              Loading races…
             </div>
           )}
 
