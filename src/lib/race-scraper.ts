@@ -1,5 +1,4 @@
 const BASE_URL = 'https://www.runnersworld.de'
-const CALENDAR_URL = `${BASE_URL}/laufkalender/?speakingUrl=laufevents&q=`
 const PROXY_URL = 'https://api.allorigins.win/raw?url='
 
 export interface ExternalRace {
@@ -15,10 +14,11 @@ export interface ExternalRace {
  * Fetch the Runners World Laufkalender HTML via a CORS proxy
  * and parse race entries from it.
  */
-export async function fetchExternalRaces(page = 1): Promise<ExternalRace[]> {
+export async function fetchExternalRaces(page = 1, city = ''): Promise<ExternalRace[]> {
+  const q = encodeURIComponent(city)
   const calendarUrl = page === 1
-    ? CALENDAR_URL
-    : `${BASE_URL}/laufkalender/seite/${page}/?q=`
+    ? `${BASE_URL}/laufkalender/?speakingUrl=laufevents&q=${q}`
+    : `${BASE_URL}/laufkalender/seite/${page}/?q=${q}`
 
   const proxyUrl = `${PROXY_URL}${encodeURIComponent(calendarUrl)}`
 
@@ -64,7 +64,7 @@ export function parseRacesFromHtml(html: string): ExternalRace[] {
       // Split postal code from city name
       const postalMatch = locationText.match(/^(\d+)\s*(.*)$/)
       const postalCode = postalMatch?.[1] ?? ''
-      const city = postalMatch?.[2] ?? locationText
+      const locationCity = postalMatch?.[2] ?? locationText
 
       // Distances: the last <p> inside a "flex items-start" div
       const distDiv = link.querySelector('.flex.items-start')
@@ -76,7 +76,7 @@ export function parseRacesFromHtml(html: string): ExternalRace[] {
       const url = href.startsWith('http') ? href : `${BASE_URL}${href}`
 
       if (name) {
-        races.push({ name, date, location: city, postalCode, distances, url })
+        races.push({ name, date, location: locationCity, postalCode, distances, url })
       }
     } catch {
       // Skip malformed entries
