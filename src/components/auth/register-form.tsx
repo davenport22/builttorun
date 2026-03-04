@@ -27,7 +27,6 @@ export function RegisterForm() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [lastSubmitTime, setLastSubmitTime] = useState<number | null>(null)
 
   const {
     register,
@@ -38,30 +37,13 @@ export function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterFormValues) => {
-    // Prevent submitting more than once every 60 seconds to avoid burning the email rate limit
-    const now = Date.now()
-    if (lastSubmitTime && now - lastSubmitTime < 60_000) {
-      const secondsLeft = Math.ceil((60_000 - (now - lastSubmitTime)) / 1000)
-      setError(`Please wait ${secondsLeft} seconds before trying again.`)
-      return
-    }
-
     setError(null)
-    setLastSubmitTime(now)
     const { error } = await signUp(data.email, data.password, data.name, data.officeName)
     if (error) {
-      const msg = error.message.toLowerCase()
-      if (msg.includes('rate limit') || msg.includes('email rate')) {
-        setError(
-          'Too many sign-up attempts. Please wait a few minutes and try again. ' +
-          'If this keeps happening, ask your admin to configure a custom SMTP provider in Supabase.'
-        )
-      } else {
-        setError(error.message)
-      }
+      setError(error.message)
     } else {
       setSuccess(true)
-      setTimeout(() => navigate('/login'), 2000)
+      setTimeout(() => navigate('/'), 1500)
     }
   }
 
@@ -91,7 +73,7 @@ export function RegisterForm() {
 
           {success ? (
             <div className="rounded-2xl bg-brand-mint/20 px-4 py-4 text-center text-sm font-semibold text-brand-dark-petrol">
-              Account created! Redirecting to login...
+              Account created! Taking you to the app...
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
