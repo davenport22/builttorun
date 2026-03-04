@@ -12,22 +12,16 @@ interface EventWithParticipants extends Event {
   offices: { id: string; name: string; color_theme: string | null } | null
 }
 
-export function useUpcomingEvents(officeId?: string | null) {
+export function useUpcomingEvents() {
   return useQuery({
-    queryKey: ['events', 'upcoming', officeId ?? 'all'],
+    queryKey: ['events', 'upcoming'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0]
-      let query = supabase
+      const { data, error } = await supabase
         .from('events')
         .select('*, participations(user_id, status, profiles(name, avatar_url)), offices(id, name, color_theme)')
         .gte('date', today)
         .order('date', { ascending: true })
-
-      if (officeId) {
-        query = query.eq('office_id', officeId)
-      }
-
-      const { data, error } = await query
       if (error) throw error
       return data as unknown as EventWithParticipants[]
     },

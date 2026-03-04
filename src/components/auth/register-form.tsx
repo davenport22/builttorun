@@ -43,7 +43,7 @@ export function RegisterForm() {
       setError(error.message)
     } else {
       setSuccess(true)
-      setTimeout(() => navigate('/login'), 2000)
+      setTimeout(() => navigate('/'), 1500)
     }
   }
 
@@ -73,7 +73,7 @@ export function RegisterForm() {
 
           {success ? (
             <div className="rounded-2xl bg-brand-mint/20 px-4 py-4 text-center text-sm font-semibold text-brand-dark-petrol">
-              Account created! Redirecting to login...
+              Account created! Taking you to the app...
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
