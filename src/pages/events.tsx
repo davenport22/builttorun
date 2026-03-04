@@ -6,34 +6,32 @@ import { ExternalRaceCard } from '@/components/events/external-race-card'
 import { useProfile } from '@/hooks/use-profile'
 import { useOffices } from '@/hooks/use-offices'
 import { useCreateEvent } from '@/hooks/use-events'
-import { useExternalRaces } from '@/hooks/use-external-races'
+import { useAllOfficeRaces } from '@/hooks/use-external-races'
 import { OFFICES } from '@/constants/offices'
-import { PlusCircle, X, Loader2, Globe, Users, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
+import { PlusCircle, X, Loader2, Globe, Users, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Office } from '@/types'
+import type { ExternalRaceWithCity } from '@/hooks/use-external-races'
 import type { ExternalRace } from '@/lib/race-scraper'
 
 export default function EventsPage() {
   const [showForm, setShowForm] = useState(false)
   const [tab, setTab] = useState<'team' | 'discover'>('discover')
-  const [page, setPage] = useState(1)
   const { data: profile } = useProfile()
   const { data: offices } = useOffices()
   const createEvent = useCreateEvent()
-  // Discover tab: filter by office city
+  // Discover tab: filter by office city (client-side)
   const [discoverOfficeId, setDiscoverOfficeId] = useState<string | null>(null)
+
+  const officeCities = OFFICES.map((o) => o.name)
+  const { data: allOfficeRaces, isLoading: externalLoading, error: externalError } = useAllOfficeRaces(officeCities)
 
   const discoverOfficeName = discoverOfficeId
     ? (offices as Office[] | undefined)?.find((o) => o.id === discoverOfficeId)?.name ?? ''
     : ''
-  const discoverCity = OFFICES.find((o) => o.name === discoverOfficeName)?.name ?? ''
-
-  const handleDiscoverOfficeChange = (officeId: string | null) => {
-    setDiscoverOfficeId(officeId)
-    setPage(1)
-  }
-
-  const { data: externalRaces, isLoading: externalLoading, isFetching: externalFetching, error: externalError } = useExternalRaces(page, discoverCity)
+  const externalRaces = discoverOfficeName
+    ? allOfficeRaces?.filter((r) => r.city === discoverOfficeName)
+    : allOfficeRaces
 
   // Default filter to user's home office
   const [selectedOfficeId, setSelectedOfficeId] = useState<string | null>(null)
@@ -175,7 +173,7 @@ export default function EventsPage() {
           {/* Office city filter chips */}
           <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto pb-1">
             <button
-              onClick={() => handleDiscoverOfficeChange(null)}
+              onClick={() => setDiscoverOfficeId(null)}
               className={cn(
                 'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all',
                 discoverOfficeId === null
@@ -183,7 +181,7 @@ export default function EventsPage() {
                   : 'bg-gray-100 text-muted-foreground hover:bg-gray-200'
               )}
             >
-              All cities
+              All offices
             </button>
             {(offices as Office[] | undefined)?.map((office) => {
               const officeConst = OFFICES.find((o) => o.name === office.name)
@@ -191,7 +189,7 @@ export default function EventsPage() {
                 <button
                   key={office.id}
                   onClick={() =>
-                    handleDiscoverOfficeChange(discoverOfficeId === office.id ? null : office.id)
+                    setDiscoverOfficeId(discoverOfficeId === office.id ? null : office.id)
                   }
                   className={cn(
                     'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all',
@@ -213,20 +211,13 @@ export default function EventsPage() {
 
           <div className="mb-4 rounded-2xl bg-brand-dark-petrol/5 px-4 py-3">
             <p className="text-xs text-muted-foreground">
-              Upcoming races from <span className="font-bold text-brand-dark-petrol">Runners World Laufkalender</span>. Tap <span className="font-bold text-brand-dark-petrol">+</span> to add a race to your team.
+              Upcoming races near your offices from <span className="font-bold text-brand-dark-petrol">Runners World Laufkalender</span>. Tap <span className="font-bold text-brand-dark-petrol">+</span> to add a race to your team.
             </p>
           </div>
 
           {externalLoading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-5 w-5 animate-spin text-brand-teal" />
-            </div>
-          )}
-
-          {!externalLoading && externalFetching && (
-            <div className="mb-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-teal" />
-              Loading races…
             </div>
           )}
 
@@ -261,28 +252,7 @@ export default function EventsPage() {
                   />
                 ))}
               </div>
-
-              {/* Pagination */}
-              <div className="mt-6 flex items-center justify-center gap-3">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-brand-dark-petrol shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="text-sm font-bold text-brand-dark-petrol">
-                  Page {page}
-                </span>
-                <button
-                  onClick={() => setPage((p) => p + 1)}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-brand-dark-petrol shadow-sm transition-colors hover:bg-gray-50"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              <p className="mt-3 text-center text-xs text-muted-foreground">
+              <p className="mt-4 text-center text-xs text-muted-foreground">
                 Source: runnersworld.de/laufkalender
               </p>
             </>
@@ -290,7 +260,7 @@ export default function EventsPage() {
 
           {externalRaces && externalRaces.length === 0 && !externalLoading && (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              No more races found on this page.
+              No races found near your offices.
             </div>
           )}
         </>
