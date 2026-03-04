@@ -7,7 +7,10 @@ interface EventListProps {
 }
 
 export function EventList({ officeId }: EventListProps) {
-  const { data: events, isLoading } = useUpcomingEvents(officeId)
+  const { data: allEvents, isLoading } = useUpcomingEvents()
+  const events = officeId
+    ? allEvents?.filter((e) => e.office_id === officeId)
+    : allEvents
 
   if (isLoading) {
     return (
