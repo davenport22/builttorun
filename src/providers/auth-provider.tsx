@@ -40,13 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, name: string, officeName?: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { name, office_name: officeName },
+        // Omitting emailRedirectTo prevents Supabase from sending a confirmation
+        // email when the project has email confirmations disabled in Auth settings.
+        emailRedirectTo: undefined,
       },
     })
+
+    // If the user already exists and is confirmed, Supabase returns a fake success
+    // with an empty identities array. Treat that as a "already registered" hint.
+    if (!error && data.user && data.user.identities?.length === 0) {
+      return { error: new Error('An account with this email already exists. Please sign in instead.') }
+    }
+
     return { error: error as Error | null }
   }
 
